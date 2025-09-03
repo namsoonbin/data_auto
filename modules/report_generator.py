@@ -11,24 +11,25 @@ from datetime import datetime
 from . import config
 
 def normalize_product_id(value):
-    """상품ID를 정규화 - 문자열과 숫자 타입 모두 처리"""
+    """상품ID를 정규화 - 문자열과 숫자 타입 모두 처리 (문자열 내 .0 포함)"""
     if pd.isna(value):
         return ''
     
-    # 이미 문자열인 경우
-    if isinstance(value, str):
-        return value.strip()
-    
-    # 숫자 타입인 경우 (int, float)
-    if isinstance(value, (int, float)):
-        # float인 경우 .0 제거를 위해 int로 변환
-        if isinstance(value, float) and value.is_integer():
-            return str(int(value))
+    # 먼저 문자열로 변환하고 공백 제거
+    value_str = str(value).strip()
+
+    try:
+        # 문자열을 float으로 변환 시도 (예: "12345.0" 처리)
+        float_val = float(value_str)
+        # float이 정수이면 .0을 제거하고 문자열로 변환
+        if float_val.is_integer():
+            return str(int(float_val))
+        # 소수점이 있는 float이면 그대로 문자열로 변환
         else:
-            return str(value)
-    
-    # 기타 타입은 문자열로 변환
-    return str(value).strip()
+            return str(float_val)
+    except (ValueError, TypeError):
+        # float 변환에 실패하면 (순수 문자열 ID), 원본 문자열 반환
+        return value_str
 
 def read_protected_excel(file_path, password=None, **kwargs):
     """
